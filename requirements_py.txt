@@ -1,0 +1,14 @@
+pandas
+scikit-learn
+matplotlib
+seaborn
+wordcloud
+nltk
+folium
+statsmodels
+xgboost
+catboost
+onnxmltools
+onnxconverter_common
+skl2onnx
+onnxruntime
