@@ -1,4 +1,3 @@
-# Spécifiez le chemin du fichier d'origine
 file_path <- "data/listings_combined.csv"
 
 # Charger le fichier CSV dans un dataframe
@@ -24,9 +23,10 @@ df$review_scores_location <- as.numeric(df$review_scores_location)
 df$review_scores_value <- as.numeric(df$review_scores_value)
 df$reviews_per_month <- as.numeric(df$reviews_per_month)
 
-
+# Supression caractere inutile
 df$amenities <- gsub("[\\[\\]\"]", "", df$amenities)
 
+# Mettre en minuscule pour le modele
 df$property_type <- tolower(df$property_type)
 df$room_type <- tolower(df$room_type)
 df$amenities <- tolower(df$amenities)
@@ -34,9 +34,7 @@ df$amenities <- tolower(df$amenities)
 
 df <- df[df$price >= 20 & df$price <= 10000, ]
 
-# Filtrer les lignes avec la région "IDF"
-
-# Fonction de remplacement des caractères corrompus
+# Fonction de remplacement des caractères
 replace_special_characters <- function(text) {
   text <- gsub("Ã©", "é", text)
   text <- gsub("Ã¨", "è", text)
@@ -59,7 +57,7 @@ replace_special_characters <- function(text) {
   return(text)
 }
 
-# Appliquer la fonction de remplacement aux noms de quartiers
+# Appliquer la fonction
 df$neighbourhood_cleansed <- replace_special_characters(df$neighbourhood_cleansed)
 
 write.csv(df, "data/listings_cleaned.csv", row.names = FALSE)
