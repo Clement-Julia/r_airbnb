@@ -1,5 +1,5 @@
 # Spécifiez le chemin du fichier d'origine
-file_path <- "C:/Users/david/Documents/M2/Langage R/TP_GROUPE/data/listings_combined.csv"
+file_path <- "data/listings_combined.csv"
 
 # Charger le fichier CSV dans un dataframe
 df <- read.csv(file_path, stringsAsFactors = FALSE, fileEncoding = "UTF-8")
@@ -62,4 +62,4 @@ replace_special_characters <- function(text) {
 # Appliquer la fonction de remplacement aux noms de quartiers
 df$neighbourhood_cleansed <- replace_special_characters(df$neighbourhood_cleansed)
 
-write.csv(df, "C:/Users/david/Documents/M2/Langage R/TP_GROUPE/listings_cleaned.csv", row.names = FALSE)
+write.csv(df, "data/listings_cleaned.csv", row.names = FALSE)
