@@ -74,12 +74,30 @@ for (region in regions) {
   # Update barre de progression après listing
   progress <- progress + 1
   setTxtProgressBar(pb, progress)
+
+  # ------------------------------------------------------
+  # ---------------------- CALENDAR ----------------------
+  # ------------------------------------------------------
+  # cat("\nTraitement du fichier CALENDAR pour la région :", region, "\n")
+  
+  # calendar_path <- paste0("data/", region, "/calendar.csv")
+  # calendar <- read.csv(calendar_path, fileEncoding = "UTF-8")
+  
+  # calendar$price <- as.numeric(gsub("[^0-9]", "", calendar$price))
+  # calendar$adjusted_price <- as.numeric(gsub("[^0-9]", "", calendar$adjusted_price))
+  # calendar <- calendar[!duplicated(calendar), ]
+  # calendar_data[[region]] <- calendar
+  
+  # # Update barre de progression après calendar
+  # progress <- progress + 1
+  # setTxtProgressBar(pb, progress)
 }
 
 close(pb)
 
 # Fusion des données listings
 listings_merged <- do.call(rbind, listings_data)
+# calendar_merged <- do.call(rbind, calendar_data)
 
 # Supprimer les lignes où toutes les valeurs sont NA après la fusion
 listings_merged <- listings_merged[rowSums(is.na(listings_merged)) < ncol(listings_merged), ]
@@ -113,4 +131,5 @@ nrow(listings_merged)
 
 # Sauvegarde des fichiers nettoyés
 write.csv(listings_merged, "data/listings_merged.csv", row.names = FALSE)
+# write.csv(calendar_merged, "data/calendar_merged.csv", row.names = FALSE)
 print("Terminé !")
