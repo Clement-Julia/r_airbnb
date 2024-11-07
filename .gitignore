@@ -1,2 +1,7 @@
 .venv/
-Data/*/*
+/bordeaux
+/lyon
+/paris
+/pays_basque
+data/*/*
+data/*.csv
