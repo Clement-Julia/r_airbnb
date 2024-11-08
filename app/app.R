@@ -123,7 +123,7 @@ ui <- page_navbar(
         selectInput("select1",label="Ville",choices=c("Region"= 1,"Paris, Île-de-France"= "IDF","Lyon, Auvergne-Rhone-Alpes" = "ARA","Bordeaux, Nouvelle-Aquitaine" = "NAQ","Pays Basque" = "64")),
         selectInput("select2",label="Quartier",choices=NULL),
         col_widths = c(-1,5,5,-3),
-        row_heights = c(2,0)
+        row_heights = c(1,1)
       ),
       selectInput("room_type",label="Type de Logement", choices=room_type),
       selectInput("property_type",label="Type de Propriété", choices=property_type),
