@@ -1,11 +1,115 @@
+if(!require(xgboost)) install.packages("xgboost")
+if(!require(shiny)) install.packages("shiny")
+if(!require(shinyjs)) install.packages("shinyjs")
+if(!require(bslib)) install.packages("bslib")
 library(shiny)
 library(shinyjs)
 library(bslib)
+library(xgboost)
 
+room_type <- c("entire home/apt","hotel room","private room","shared room")
+property_type <- c(
+  "logement entier" = "entire rental unit",
+  "chambre privée dans un chalet" = "private room in chalet",
+  "loft entier" = "entire loft",
+  "chambre privée dans une chambre d'hôtes" = "private room in bed and breakfast",
+  "chambre privée dans un condo" = "private room in condo",
+  "maison entière" = "entire home",
+  "condo entier" = "entire condo",
+  "chambre privée dans une maison" = "private room in home",
+  "chambre privée dans un logement" = "private room in rental unit",
+  "maison de ville entière" = "entire townhouse",
+  "maison de vacances entière" = "entire vacation home",
+  "chambre privée dans une maison de ville" = "private room in townhouse",
+  "chambre privée dans une villa" = "private room in villa",
+  "maison d'hôtes entière" = "entire guesthouse",
+  "suite entière" = "entire guest suite",
+  "chambre privée dans une suite d'hôtes" = "private room in guest suite",
+  "casa particular" = "casa particular",
+  "chalet entier" = "entire chalet",
+  "villa entière" = "entire villa",
+  "chambre privée dans un lodge en nature" = "private room in nature lodge",
+  "cottage entier" = "entire cottage",
+  "bungalow entier" = "entire bungalow",
+  "séjour à la ferme" = "farm stay",
+  "chambre privée dans un cabane" = "private room in cabin",
+  "chambre privée dans un loft" = "private room in loft",
+  "chambre privée" = "private room",
+  "tiny home" = "tiny home",  # Pas de traduction nécessaire
+  "chambre privée dans une maison d'hôtes" = "private room in guesthouse",
+  "logement entier" = "entire place",
+  "chambre privée dans un séjour à la ferme" = "private room in farm stay",
+  "chambre partagée dans un lodge en nature" = "shared room in nature lodge",
+  "chambre partagée dans une maison d'hôtes" = "shared room in guesthouse",
+  "chambre privée dans une auberge de jeunesse" = "private room in hostel",
+  "chambre partagée dans une maison de ville" = "shared room in townhouse",
+  "appartement entier avec services" = "entire serviced apartment",
+  "chambre dans un aparthotel" = "room in aparthotel",
+  "chambre partagée dans un condo" = "shared room in condo",
+  "grange" = "barn",
+  "chambre partagée dans une chambre d'hôtes" = "shared room in bed and breakfast",
+  "chambre dans un hôtel" = "room in hotel",
+  "chambre partagée dans un tiny home" = "shared room in tiny home",
+  "cabane de berger" = "shepherd’s hut",
+  "chambre privée dans une maison en terre" = "private room in earthen home",
+  "chambre privée dans un tiny home" = "private room in tiny home",
+  "maison en terre" = "earthen home",
+  "camper/caravane" = "camper/rv",
+  "chambre privée dans un château" = "private room in castle",
+  "bateau" = "boat",
+  "chambre partagée dans une auberge de jeunesse" = "shared room in hostel",
+  "cabine entière" = "entire cabin",
+  "tente" = "tent",
+  "chambre privée dans une casa particular" = "private room in casa particular",
+  "chambre partagée dans un tipi" = "shared room in tipi",
+  "chambre dans un hôtel boutique" = "room in boutique hotel",
+  "chambre privée dans une maison de vacances" = "private room in vacation home",
+  "camping" = "campsite",
+  "parc de vacances" = "holiday park",
+  "chambre partagée dans un resort" = "shared room in resort",
+  "chambre partagée dans un logement" = "shared room in rental unit",
+  "chambre privée dans un bateau" = "private room in boat",
+  "yourte" = "yurt",
+  "chambre d'hôtes entière" = "entire bed and breakfast",
+  "maison flottante" = "houseboat",
+  "chambre privée dans un bungalow" = "private room in bungalow",
+  "château" = "castle",
+  "chambre partagée dans une maison" = "shared room in home",
+  "chambre dans une chambre d'hôtes" = "room in bed and breakfast",
+  "chambre dans une auberge de jeunesse" = "room in hostel",
+  "chambre partagée dans un appartement avec services" = "shared room in serviced apartment",
+  "chambre partagée dans un hôtel" = "shared room in hotel",
+  "chambre partagée dans un loft" = "shared room in loft",
+  "chambre privée dans un appartement avec services" = "private room in serviced apartment",
+  "conteneur d'expédition" = "shipping container",
+  "chambre privée dans une maison flottante" = "private room in houseboat",
+  "chambre partagée dans un hôtel boutique" = "shared room in boutique hotel"
+)
+equipement <- c(
+  "bain à remous" = "hot tub",
+  "climatisation" = "air conditioning",
+  "wifi" = "wifi",
+  "cuisine" = "kitchen",
+  "lave-linge" = "washer",
+  "parking gratuit sur place" = "free parking on premises",
+  "piscine" = "pool",
+  "salle de sport" = "gym",
+  "chauffage" = "heating",
+  "petit déjeuner" = "breakfast",
+  "animaux acceptés" = "pet-friendly",
+  "enregistrement autonome" = "self check-in",
+  "sèche-linge" = "dryer",
+  "alarme incendie" = "smoke alarm",
+  "lit bébé" = "crib",
+  "espace de travail dédié" = "dedicated workspace",
+  "télévision" = "tv",
+  "lave-vaisselle" = "dishwasher",
+  "cheminée" = "fireplace",
+  "alarme au monoxyde de carbone" = "carbon monoxide alarm"
+)
 
-#id,name,host_id,host_name,neighbourhood_group,neighbourhood,latitude,longitude,room_type,price,minimum_nights,number_of_reviews,last_review,reviews_per_month,calculated_host_listings_count,availability_365,number_of_reviews_ltm,
 ui <- page_navbar(
-  title = "AirBnB House Price Prédiction : HPP",
+  title = "AirBnB House Price Prédiction",
   bg = "#2D89C8",
   inverse = TRUE,
   useShinyjs(), 
@@ -14,38 +118,84 @@ ui <- page_navbar(
   nav_panel(title = "Home",id="home", 
     card(
       card_header('Simulateur du prix de votre Logement :'),
-      p("Localisation :"),
+      p("Location :"),
       layout_columns(
-        selectInput("select1",label="Ville",choices=c("Region"= 1,"Paris, Île-de-France"= 2,"Lyon, Auvergne-Rhone-Alpes" = 3,"Bordeaux, Nouvelle-Aquitaine" = 4)),
+        selectInput("select1",label="Ville",choices=c("Region"= 1,"Paris, Île-de-France"= "IDF","Lyon, Auvergne-Rhone-Alpes" = "ARA","Bordeaux, Nouvelle-Aquitaine" = "NAQ","Pays Basque" = "64")),
         selectInput("select2",label="Quartier",choices=NULL),
-        col_widths = c(-1,3,6,-3),
-        row_heights = c(1,1)
+        col_widths = c(-1,5,5,-3),
+        row_heights = c(2,0)
       ),
-      selectInput("room_type",label="Type de Logement", choices=NULL),
-      selectInput("room_type",label="Type de Logement", choices=NULL),
-      # numericInput("nbPiece",label="Nombre de Chambres :",min=1,max=100,value=1),
-      # numericInput("nbPieceEau",label="Nombre de Piece d'eau :",min=1,max=100,value=1),
-        # numericInput("nbWC",label="Nombre de WC :",min=1,max=100,value=1),
-        # checkboxGroupInput(
-          # "caract",
-          # "Information complémentaire :",
-          # choices = list("Cuisine"=1,"Lave vaisselle"=2,"Machine a lavé"=3,"Jardin" = 4, "Piscine" = 5, "Jaccuzi" = 6, "Fibre" = 7,"Vélos"= 8),
-        # ),
+      selectInput("room_type",label="Type de Logement", choices=room_type),
+      selectInput("property_type",label="Type de Propriété", choices=property_type),
+      numericInput("nb_lits", label = "Nombre de lits :", min = 1, max = 20, value = 1),
+      numericInput("nb_bedrooms", label = "Nombre de Chambre :", min = 1, max = 20, value = 1),
+      numericInput("nb_sdb", label = "Nombre de salles de bain :", min = 1, max = 10, value = 1),
+      selectInput(
+        "select",
+        "Equipements :",
+        choices = equipement,
+        multiple = TRUE
+      ),
+      actionButton("predict", "Predict", icon("paper-plane"), 
+    style="color: #fff; background-color: #2D89C8; border-color: #2D89C8"),
+      value_box( 
+          title = "Prediction Result :", 
+          showcase = icon("hand-holding-dollar"), 
+          value = uiOutput("prediction"),  
+          theme = "bg-gradient-blue-purple" 
+      )
     )
-  ),
-  nav_panel(title = "Statistique",id="prediction", 
-      card(
-          card_header("Prédiction du prix de mon logement"),
-          "TEST",
-          value_box(
-              title = "Value box",
-              value = 100
-          )
-      )),
+  )
 )
 # Define server logic required to draw a histogram ----
 server <- function(input, output, session) {
   
+  #   output$prediction <- renderText({ 
+  #   glue::glue("${1000}") 
+  # }) |> 
+  #   bindEvent(input$predict)
+  # Charger le modèle
+  model <- xgb.load("../xgboost_model.bin")
+
+  # Prédire lorsque l'utilisateur clique sur le bouton
+  observeEvent(input$predict, {
+    # Récupérer les valeurs des champs
+    ville <- input$select1
+    quartier <- input$select2
+    room_type <- input$room_type
+    property_type <- input$property_type
+    equipements <- input$select
+    nb_lits <- input$nb_lits
+    nb_sdb <- input$nb_sdb
+    nb_bedroom <- input$nb_bedrooms
+    # Formater les informations pour votre modèle
+    # Supposons que votre modèle nécessite un dataframe avec des colonnes spécifiques
+    data <- data.frame(
+      region = as.numeric(factor(ville)),  # Convertir en numérique
+      neighbourhood_cleansed = as.numeric(factor(quartier)),
+      room_type = as.numeric(factor(room_type)),
+      property_type = as.numeric(factor(property_type)),
+      amenities = as.numeric(factor(paste(equipements, collapse = ","))),
+      beds = nb_lits,
+      bedrooms = nb_bedroom,
+      bathrooms = nb_sdb,
+      stringsAsFactors = FALSE
+    )
+    # Convertir le dataframe en une matrice pour XGBoost
+    data_matrix <- as.matrix(data)
+
+    # Encapsuler les données dans un xgb.DMatrix
+    dmatrix <- xgb.DMatrix(data = data_matrix)
+
+    # Faire la prédiction
+    prediction <- predict(model, dmatrix)
+    
+    # Afficher la prédiction dans la valueBox
+    output$prediction <- renderText({
+      glue::glue("${round(prediction, 2)}")
+    })
+
+  })
         # Masquer ou activer le second selectInput au départ
   observe({
     if (input$select1 == "") {
@@ -62,7 +212,7 @@ server <- function(input, output, session) {
   # Mise à jour dynamique des options du second selectInput
   observeEvent(input$select1, {
     print(input$select1)
-    if (input$select1 == "2") {
+    if (input$select1 == "IDF") {
       updateSelectInput(session, "select2",
                         choices = c("Observatoire",
                                     "Hôtel-de-Ville",
@@ -86,8 +236,8 @@ server <- function(input, output, session) {
                                     "Palais-Bourbon"
                                   ))  
       show("select2")
-      enable("select2")
-    } else if (input$select1 == "3") {
+      enable("select2")  
+    } else if (input$select1 == "ARA") {
       updateSelectInput(session, "select2", 
                         choices = c("5e Arrondissement",
                                     "2e Arrondissement",
@@ -100,8 +250,8 @@ server <- function(input, output, session) {
                                     "9e Arrondissement"
                                   ))
       show("select2")
-      enable("select2")
-    } else if (input$select1 == "4") {
+      enable("select2") 
+    } else if (input$select1 == "NAQ") {
       updateSelectInput(session, "select2", 
                         choices = c("Bordeaux Sud",
 "Saint-Mdard-en-Jalles",
@@ -167,7 +317,7 @@ server <- function(input, output, session) {
 "Saint-Vincent-de-Paul"))
       show("select2")
       enable("select2")
-    }else if(input$select1 == "5"){
+    }else if(input$select1 == "64"){
        updateSelectInput(session, "select2", 
                         choices = c(
                             "Hendaye",
