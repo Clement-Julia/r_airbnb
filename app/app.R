@@ -109,7 +109,7 @@ equipement <- c(
 )
 
 ui <- page_navbar(
-  title = "AirBnB House Price Prédiction",
+  title = "Simulacool: House Price Prédiction",
   bg = "#2D89C8",
   inverse = TRUE,
   useShinyjs(), 
@@ -118,15 +118,19 @@ ui <- page_navbar(
   nav_panel(title = "Home",id="home", 
     card(
       card_header('Simulateur du prix de votre Logement :'),
-      p("Location :"),
       layout_columns(
-        selectInput("select1",label="Ville",choices=c("Region"= 1,"Paris, Île-de-France"= "IDF","Lyon, Auvergne-Rhone-Alpes" = "ARA","Bordeaux, Nouvelle-Aquitaine" = "NAQ","Pays Basque" = "64")),
+        selectInput("select1",label="Ville/Region",choices=c(" "= 1,"Paris, Île-de-France"= "IDF","Lyon, Auvergne-Rhone-Alpes" = "ARA","Bordeaux, Nouvelle-Aquitaine" = "NAQ","Pays Basque" = "64")),
         selectInput("select2",label="Quartier",choices=NULL),
         col_widths = c(-1,5,5,-3),
         row_heights = c(1,1)
       ),
-      selectInput("room_type",label="Type de Logement", choices=room_type),
-      selectInput("property_type",label="Type de Propriété", choices=property_type),
+      layout_columns(
+        selectInput("room_type",label="Type de Logement", choices=room_type),
+        selectInput("property_type",label="Type de Propriété", choices=property_type),
+        col_widths = c(-1,5,5,-3),
+        row_heights = c(1,1)
+      ),
+      br(),
       numericInput("nb_lits", label = "Nombre de lits :", min = 1, max = 20, value = 1),
       numericInput("nb_bedrooms", label = "Nombre de Chambre :", min = 1, max = 20, value = 1),
       numericInput("nb_sdb", label = "Nombre de salles de bain :", min = 1, max = 10, value = 1),
@@ -142,7 +146,8 @@ ui <- page_navbar(
           title = "Prediction Result :", 
           showcase = icon("hand-holding-dollar"), 
           value = uiOutput("prediction"),  
-          theme = "bg-gradient-blue-purple" 
+          theme = "bg-gradient-blue-purple",
+          style = "min-height: 100px; max-height: 200px; overflow-y: auto; width: 100%;"
       )
     )
   )
