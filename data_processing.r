@@ -46,7 +46,9 @@ for (region in regions) {
   }
   
   # Nettoyage et conversion des types
-  data$price <- as.numeric(gsub("[^0-9]", "", data$price))
+  data$price <- as.numeric(gsub("[$,]", "", data$price))
+  data <- data[!is.na(data$price) & data$price != "", ]
+  
   data$accommodates <- as.integer(data$accommodates)
   data$bathrooms <- as.numeric(data$bathrooms)
   data$bedrooms <- as.integer(data$bedrooms)
@@ -67,7 +69,7 @@ for (region in regions) {
   data$amenities <- tolower(data$amenities)
   
   # Filtrage des valeurs de prix
-  data <- data[data$price >= 20 & data$price <= 10000, ]
+  # data <- data[data$price >= 20 & data$price <= 10000, ]
   
   listings_data[[region]] <- data
   
@@ -130,6 +132,6 @@ listings_merged$neighbourhood_cleansed <- replace_special_characters(listings_me
 nrow(listings_merged)
 
 # Sauvegarde des fichiers nettoyés
-write.csv(listings_merged, "data/listings_merged.csv", row.names = FALSE)
+write.csv(listings_merged, "data/listings_test.csv", row.names = FALSE)
 # write.csv(calendar_merged, "data/calendar_merged.csv", row.names = FALSE)
 print("Terminé !")
