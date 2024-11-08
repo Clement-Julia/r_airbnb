@@ -35,7 +35,7 @@ property_type <- c(
   "chambre privée dans un cabane" = "private room in cabin",
   "chambre privée dans un loft" = "private room in loft",
   "chambre privée" = "private room",
-  "tiny home" = "tiny home",  # Pas de traduction nécessaire
+  "tiny home" = "tiny home", 
   "chambre privée dans une maison d'hôtes" = "private room in guesthouse",
   "logement entier" = "entire place",
   "chambre privée dans un séjour à la ferme" = "private room in farm stay",
@@ -125,15 +125,15 @@ ui <- page_navbar(
         row_heights = c(1,1)
       ),
       layout_columns(
-        selectInput("room_type",label="Type de Logement", choices=room_type),
+        # selectInput("room_type",label="Type de Logement", choices=room_type),
         selectInput("property_type",label="Type de Propriété", choices=property_type),
+        numericInput("nb_client_max", label = "Nombre max d'hôtes :", min = 1, max = 100, value = 1),
         col_widths = c(-1,5,5,-3),
-        row_heights = c(1,1)
+        row_heights = c(1)
       ),
       br(),
-      numericInput("nb_lits", label = "Nombre de lits :", min = 1, max = 20, value = 1),
       numericInput("nb_bedrooms", label = "Nombre de Chambre :", min = 1, max = 20, value = 1),
-      numericInput("nb_sdb", label = "Nombre de salles de bain :", min = 1, max = 10, value = 1),
+      numericInput("nb_sdb", label = "Nombre de salles de bain :", min = 1, max = 20, value = 1),
       selectInput(
         "select",
         "Equipements :",
@@ -152,332 +152,93 @@ ui <- page_navbar(
     )
   )
 )
-# Define server logic required to draw a histogram ----
 server <- function(input, output, session) {
-  
-  #   output$prediction <- renderText({ 
-  #   glue::glue("${1000}") 
-  # }) |> 
-  #   bindEvent(input$predict)
-  # Charger le modèle
   model <- xgb.load("../xgboost_model.bin")
-
-  # Prédire lorsque l'utilisateur clique sur le bouton
   observeEvent(input$predict, {
-    # Récupérer les valeurs des champs
     ville <- input$select1
     quartier <- input$select2
-    room_type <- input$room_type
+    # room_type <- input$room_type
     property_type <- input$property_type
     equipements <- input$select
-    nb_lits <- input$nb_lits
+    nb_clientmax <- input$nb_client_max
+    # nb_lits <- input$nb_lits
     nb_sdb <- input$nb_sdb
     nb_bedroom <- input$nb_bedrooms
-    # Formater les informations pour votre modèle
-    # Supposons que votre modèle nécessite un dataframe avec des colonnes spécifiques
     data <- data.frame(
-      region = as.numeric(factor(ville)),  # Convertir en numérique
+      region = as.numeric(factor(ville)),
       neighbourhood_cleansed = as.numeric(factor(quartier)),
-      room_type = as.numeric(factor(room_type)),
+      # room_type = as.numeric(factor(room_type)),
       property_type = as.numeric(factor(property_type)),
       amenities = as.numeric(factor(paste(equipements, collapse = ","))),
-      beds = nb_lits,
+      # beds = nb_lits,
       bedrooms = nb_bedroom,
       bathrooms = nb_sdb,
+      beds_and_baths = nb_bedroom + nb_sdb,
+      accomodates = nb_clientmax,
       stringsAsFactors = FALSE
     )
-    # Convertir le dataframe en une matrice pour XGBoost
     data_matrix <- as.matrix(data)
-
-    # Encapsuler les données dans un xgb.DMatrix
     dmatrix <- xgb.DMatrix(data = data_matrix)
-
-    # Faire la prédiction
     prediction <- predict(model, dmatrix)
-    
-    # Afficher la prédiction dans la valueBox
     output$prediction <- renderText({
       glue::glue("${round(prediction, 2)}")
     })
 
   })
-        # Masquer ou activer le second selectInput au départ
   observe({
     if (input$select1 == "") {
-      # Cacher et désactiver le second selectInput quand rien n'est sélectionné
       hide("select2")
       disable("select2")
     } else {
-      # Afficher et activer le second selectInput dès qu'une option est choisie
       show("select2")
       enable("select2")
     }
   })
-
-  # Mise à jour dynamique des options du second selectInput
   observeEvent(input$select1, {
-    print(input$select1)
     if (input$select1 == "IDF") {
       updateSelectInput(session, "select2",
-                        choices = c("Observatoire",
-                                    "Hôtel-de-Ville",
-                                    "Opéra",
-                                    "Buttes-Chaumont",
-                                    "Élysée",
-                                    "Entrepôt",
-                                    "Louvre",
-                                    "Popincourt",
-                                    "Buttes-Montmartre",
-                                    "Gobelins",
-                                    "Bourse",
-                                    "Ménilmontant",
-                                    "Passy",
-                                    "Reuilly",
-                                    "Vaugirard",
-                                    "Temple",
-                                    "Panthéon",
-                                    "Batignolles-Monceau",
-                                    "Luxembourg",
-                                    "Palais-Bourbon"
-                                  ))  
+                        choices = c("Observatoire","Hôtel-de-Ville","Opéra","Buttes-Chaumont","Élysée","Entrepôt","Louvre","Popincourt","Buttes-Montmartre",
+                                    "Gobelins","Bourse","Ménilmontant","Passy","Reuilly","Vaugirard","Temple","Panthéon","Batignolles-Monceau","Luxembourg",
+                                    "Palais-Bourbon"))
       show("select2")
       enable("select2")  
     } else if (input$select1 == "ARA") {
       updateSelectInput(session, "select2", 
-                        choices = c("5e Arrondissement",
-                                    "2e Arrondissement",
-                                    "3e Arrondissement",
-                                    "6e Arrondissement",
-                                    "7e Arrondissement",
-                                    "1er Arrondissement",
-                                    "8e Arrondissement",
-                                    "4e Arrondissement",
-                                    "9e Arrondissement"
-                                  ))
+                        choices = c("5e Arrondissement","2e Arrondissement","3e Arrondissement","6e Arrondissement","7e Arrondissement","1er Arrondissement","8e Arrondissement",
+                          "4e Arrondissement","9e Arrondissement"))
       show("select2")
       enable("select2") 
     } else if (input$select1 == "NAQ") {
       updateSelectInput(session, "select2", 
-                        choices = c("Bordeaux Sud",
-"Saint-Mdard-en-Jalles",
-"Chartrons - Grand Parc - Jardin Public",
-"Centre ville (Bordeaux)",
-"Bgles",
-"Talence",
-"Le Bouscat",
-"Saint Augustin - Tauzin - Alphonse Dupeux",
-"Caudran",
-"Nansouty - Saint Gens",
-"Magonty",
-"Palmer-Gravires-Cavailles",
-"Carbon-Blanc",
-"La Glacire",
-"France Alouette",
-"Gradignan",
-"Le Bourg",
-"Bouliac",
-"Lormont",
-"Saint-Aubin-de-Mdoc",
-"La Bastide",
-"Verthamon",
-"Chiquet-Fontaudin",
-"Bordeaux Maritime",
-"Floirac",
-"Bruges",
-"Villenave-d'Ornon",
-"Les Eyquems",
-"Eysines",
-"Blanquefort",
-"Bourran",
-"Parempuyre",
-"Gambetta-Mairie-Lissandre",
-"Capeyron",
-"Arlac",
-"Chemin Long",
-"Ambars-et-Lagrave",
-"La Paillre-Compostelle",
-"Martignas-sur-Jalle",
-"Bassens",
-"Le Haillan",
-"Le Monteil",
-"Saige",
-"Beaudsert",
-"Sardine",
-"Le Taillan-Mdoc",
-"Centre ville (Merignac)",
-"Cap de Bos",
-"Casino",
-"Beutre",
-"3M-Bourgailh",
-"Plaisance-Loret-Maregue",
-"Nos",
-"Artigues-Prs-Bordeaux",
-"Saint-Louis-de-Montferrand",
-"Brivazac-Candau",
-"Arago-La Chataigneraie",
-"Toctoucau",
-"Le Vallon-Les Echoppes",
-"Le Burck",
-"Ambs",
-"Saint-Vincent-de-Paul"))
+                        choices = c("Bordeaux Sud","Saint-Mdard-en-Jalles","Chartrons - Grand Parc - Jardin Public","Centre ville (Bordeaux)","Bgles","Talence","Le Bouscat",
+"Saint Augustin - Tauzin - Alphonse Dupeux","Caudran","Nansouty - Saint Gens","Magonty","Palmer-Gravires-Cavailles","Carbon-Blanc","La Glacire","France Alouette","Gradignan",
+"Le Bourg","Bouliac","Lormont","Saint-Aubin-de-Mdoc","La Bastide","Verthamon","Chiquet-Fontaudin","Bordeaux Maritime","Floirac","Bruges","Villenave-d'Ornon","Les Eyquems","Eysines","Blanquefort",
+"Bourran","Parempuyre","Gambetta-Mairie-Lissandre","Capeyron","Arlac","Chemin Long","Ambars-et-Lagrave","La Paillre-Compostelle","Martignas-sur-Jalle","Bassens","Le Haillan","Le Monteil",
+"Saige","Beaudsert","Sardine","Le Taillan-Mdoc","Centre ville (Merignac)","Cap de Bos","Casino","Beutre","3M-Bourgailh","Plaisance-Loret-Maregue","Nos","Artigues-Prs-Bordeaux","Saint-Louis-de-Montferrand",
+"Brivazac-Candau","Arago-La Chataigneraie","Toctoucau","Le Vallon-Les Echoppes","Le Burck","Ambs","Saint-Vincent-de-Paul"))
       show("select2")
       enable("select2")
     }else if(input$select1 == "64"){
        updateSelectInput(session, "select2", 
-                        choices = c(
-                            "Hendaye",
-                            "Biarritz",
-                            "Urrugne",
-                            "Bayonne",
-                            "Anglet",
-                            "Bidart",
-                            "Guéthary",
-                            "Saint-Jean-de-Luz",
-                            "Lahonce",
-                            "Saint-Pierre-d'Irube",
-                            "Saint-Pée-sur-Nivelle",
-                            "Ciboure",
-                            "Arbonne",
-                            "Cambo-les-Bains",
-                            "Itxassou",
-                            "Saint-Étienne-de-Baïgorry",
-                            "Ascain",
-                            "Uhart-Cize",
-                            "Bidache",
-                            "Jatxou",
-                            "Larressore",
-                            "Hasparren",
-                            "Mouguerre",
-                            "Ascarat",
-                            "Villefranque",
-                            "Boucau",
-                            "Louhossoa",
-                            "Sare",
-                            "Arcangues",
-                            "Sauguis-Saint-Étienne",
-                            "Bardos",
-                            "Ainhoa",
-                            "Ustaritz",
-                            "Sames",
-                            "Barcus",
-                            "Urt",
-                            "Bassussarry",
-                            "Arrast-Larrebieu",
-                            "Ahetze",
-                            "Irissarry",
-                            "Saint-Esteben",
-                            "Halsou",
-                            "Souraïde",
-                            "Irouléguy",
-                            "Saint-Martin-d'Arrossa",
-                            "Saint-Jean-le-Vieux",
-                            "Briscous",
-                            "Saint-Palais",
-                            "Ossès",
-                            "Bonloc",
-                            "Saint-Jean-Pied-de-Port",
-                            "Aldudes",
-                            "Isturits",
-                            "Larceveau-Arros-Cibits",
-                            "Anhaux",
-                            "Armendarits",
-                            "Mauléon-Licharre",
-                            "Trois-Villes",
-                            "Suhescun",
-                            "Osserain-Rivareyte",
-                            "Bunus",
-                            "Ispoure",
-                            "Came",
-                            "Biriatou",
-                            "La Bastide-Clairence",
-                            "Macaye",
-                            "Saint-Martin-d'Arberoue",
-                            "Espelette",
-                            "Caro",
-                            "Amendeuix-Oneix",
-                            "Laguinge-Restoue",
-                            "Arnéguy",
-                            "Gabat",
-                            "Estérençuby",
-                            "Ahaxe-Alciette-Bascassan",
-                            "Lecumberry",
-                            "Alçay-Alçabéhéty-Sunharette",
-                            "Ayherre",
-                            "Guiche",
-                            "Larribar-Sorhapuru",
-                            "Urcuit",
-                            "Aincille",
-                            "Mendionde",
-                            "Aroue-Ithorots-Olhaïby",
-                            "Orègue",
-                            "Iholdy",
-                            "Domezain-Berraute",
-                            "Montory",
-                            "Beyrie-sur-Joyeuse",
-                            "Roquiague",
-                            "Jaxu",
-                            "Charritte-de-Bas",
-                            "Chéraute",
-                            "Ainhice-Mongelos",
-                            "Lichos",
-                            "Banca",
-                            "Uhart-Mixe",
-                            "Sainte-Engrâce",
-                            "Licq-Athérey",
-                            "Aïcirits-Camou-Suhast",
-                            "Arraute-Charritte",
-                            "Hosta",
-                            "L'Hôpital-Saint-Blaise",
-                            "Saint-Just-Ibarre",
-                            "Gotein-Libarrenx",
-                            "Ordiarp",
-                            "Béguios",
-                            "Béhasque-Lapiste",
-                            "Lasse",
-                            "Viodos-Abense-de-Bas",
-                            "Bidarray",
-                            "Béhorléguy",
-                            "Hélette",
-                            "Lantabat",
-                            "Menditte",
-                            "Tardets-Sorholus",
-                            "Masparraute",
-                            "Ilharre",
-                            "Camou-Cihigue",
-                            "Haux",
-                            "Urepel",
-                            "Lacarre",
-                            "Gamarthe",
-                            "Pagolle",
-                            "Aussurucq",
-                            "Arbérats-Sillègue",
-                            "Alos-Sibas-Abense",
-                            "Larrau",
-                            "Musculdy",
-                            "Amorots-Succos",
-                            "Espès-Undurein",
-                            "Mendive",
-                            "Berrogain-Laruns",
-                            "Ostabat-Asme",
-                            "Garris",
-                            "Ainharp",
-                            "Arhansus",
-                            "Saint-Michel",
-                            "Ossas-Suhare",
-                            "Lichans-Sunhar",
-                            "Etcharry"))
-
+                        choices = c("Hendaye","Biarritz","Urrugne","Bayonne","Anglet","Bidart","Guéthary","Saint-Jean-de-Luz","Lahonce","Saint-Pierre-d'Irube","Saint-Pée-sur-Nivelle",
+                            "Ciboure","Arbonne","Cambo-les-Bains","Itxassou","Saint-Étienne-de-Baïgorry","Ascain","Uhart-Cize","Bidache","Jatxou","Larressore","Hasparren",
+                            "Mouguerre","Ascarat","Villefranque", "Boucau","Louhossoa","Sare","Arcangues","Sauguis-Saint-Étienne","Bardos","Ainhoa","Ustaritz","Sames",
+                            "Barcus","Urt","Bassussarry","Arrast-Larrebieu","Ahetze","Irissarry","Saint-Esteben","Halsou","Souraïde","Irouléguy","Saint-Martin-d'Arrossa",
+                            "Saint-Jean-le-Vieux","Briscous","Saint-Palais","Ossès","Bonloc","Saint-Jean-Pied-de-Port","Aldudes","Isturits","Larceveau-Arros-Cibits","Anhaux",
+                            "Armendarits","Mauléon-Licharre","Trois-Villes","Suhescun","Osserain-Rivareyte","Bunus","Ispoure","Came","Biriatou","La Bastide-Clairence","Macaye",
+                            "Saint-Martin-d'Arberoue","Espelette","Caro","Amendeuix-Oneix","Laguinge-Restoue","Arnéguy","Gabat","Estérençuby","Ahaxe-Alciette-Bascassan",
+                            "Lecumberry","Alçay-Alçabéhéty-Sunharette","Ayherre","Guiche","Larribar-Sorhapuru","Urcuit","Aincille","Mendionde","Aroue-Ithorots-Olhaïby",
+                            "Orègue","Iholdy","Domezain-Berraute","Montory","Beyrie-sur-Joyeuse","Roquiague","Jaxu","Charritte-de-Bas","Chéraute","Ainhice-Mongelos",
+                            "Lichos","Banca","Uhart-Mixe","Sainte-Engrâce","Licq-Athérey","Aïcirits-Camou-Suhast","Arraute-Charritte","Hosta","L'Hôpital-Saint-Blaise",
+                            "Saint-Just-Ibarre","Gotein-Libarrenx","Ordiarp","Béguios","Béhasque-Lapiste","Lasse","Viodos-Abense-de-Bas","Bidarray","Béhorléguy","Hélette",
+                            "Lantabat","Menditte","Tardets-Sorholus","Masparraute","Ilharre","Camou-Cihigue","Haux","Urepel","Lacarre","Gamarthe","Pagolle","Aussurucq",
+                            "Arbérats-Sillègue","Alos-Sibas-Abense","Larrau","Musculdy","Amorots-Succos","Espès-Undurein","Mendive","Berrogain-Laruns","Ostabat-Asme",
+                            "Garris","Ainharp","Arhansus","Saint-Michel","Ossas-Suhare","Lichans-Sunhar","Etcharry"))
     }else{
         hide("select2")
         disable("select2")
     }
   })
-  
-  # Afficher la sélection des deux menus
-  output$result <- renderText({
-    paste("Vous avez sélectionné", input$select1, "et", input$select2)
-  })
-  
 }
 
 shinyApp(ui = ui, server = server)
