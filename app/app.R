@@ -160,23 +160,27 @@ server <- function(input, output, session) {
     # room_type <- input$room_type
     property_type <- input$property_type
     equipements <- input$select
+    print(equipements)
+    print(typeof(equipements))
     nb_clientmax <- input$nb_client_max
     # nb_lits <- input$nb_lits
     nb_sdb <- input$nb_sdb
     nb_bedroom <- input$nb_bedrooms
     data <- data.frame(
-      region = as.numeric(factor(ville)),
-      neighbourhood_cleansed = as.numeric(factor(quartier)),
+      # region = as.numeric(factor(ville)),
+      neighbourhood_cleansed = quartier,
       # room_type = as.numeric(factor(room_type)),
-      property_type = as.numeric(factor(property_type)),
-      amenities = as.numeric(factor(paste(equipements, collapse = ","))),
+      property_type = property_type,
+      amenities = as.list(equipements),
       # beds = nb_lits,
-      bedrooms = nb_bedroom,
-      bathrooms = nb_sdb,
+      # bedrooms = nb_bedroom,
+      # bathrooms = nb_sdb,
       beds_and_baths = nb_bedroom + nb_sdb,
       accomodates = nb_clientmax,
       stringsAsFactors = FALSE
     )
+    data[] <- lapply(data, function(x) if(is.character(x)) as.numeric(as.factor(x)) else x)
+
     data_matrix <- as.matrix(data)
     dmatrix <- xgb.DMatrix(data = data_matrix)
     prediction <- predict(model, dmatrix)
